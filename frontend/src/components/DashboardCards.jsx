@@ -1,49 +1,76 @@
-function DashboardCards() {
+import {
+  Boxes,
+  Network,
+  ShieldAlert,
+  TriangleAlert,
+  Gauge,
+  AlertTriangle,
+} from "lucide-react";
+
+function DashboardCards({ summary }) {
+  if (!summary) return null;
+
   const cards = [
     {
+      title: "Risk Score",
+      value: summary.risk_score,
+      color: "bg-purple-600",
+      icon: <Gauge size={28} />,
+    },
+    {
+      title: "Risk Level",
+      value: summary.risk_level,
+      color:
+        summary.risk_level === "LOW"
+          ? "bg-green-600"
+          : summary.risk_level === "MEDIUM"
+          ? "bg-yellow-500"
+          : summary.risk_level === "HIGH"
+          ? "bg-orange-500"
+          : "bg-red-600",
+      icon: <ShieldAlert size={28} />,
+    },
+    {
       title: "Components",
-      value: "0",
-      color: "#2563eb",
+      value: summary.total_components,
+      color: "bg-blue-600",
+      icon: <Boxes size={28} />,
+    },
+    {
+      title: "Dependencies",
+      value: summary.total_dependencies,
+      color: "bg-indigo-600",
+      icon: <Network size={28} />,
     },
     {
       title: "Vulnerabilities",
-      value: "0",
-      color: "#dc2626",
+      value: summary.total_vulnerabilities,
+      color: "bg-red-600",
+      icon: <AlertTriangle size={28} />,
     },
     {
-      title: "Risk Score",
-      value: "Low",
-      color: "#16a34a",
-    },
-    {
-      title: "Licenses",
-      value: "0",
-      color: "#ca8a04",
+      title: "High Risk Packages",
+      value: summary.high_risk_packages,
+      color: "bg-orange-600",
+      icon: <TriangleAlert size={28} />,
     },
   ];
 
   return (
-    <div
-      style={{
-        display: "grid",
-        gridTemplateColumns: "repeat(2, 1fr)",
-        gap: "20px",
-        marginTop: "30px",
-      }}
-    >
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
       {cards.map((card) => (
         <div
           key={card.title}
-          style={{
-            background: card.color,
-            color: "white",
-            padding: "20px",
-            borderRadius: "12px",
-            boxShadow: "0 5px 10px rgba(0,0,0,0.2)",
-          }}
+          className={`${card.color} text-white rounded-xl shadow-lg p-6`}
         >
-          <h3>{card.title}</h3>
-          <h1>{card.value}</h1>
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-semibold">{card.title}</h3>
+            {card.icon}
+          </div>
+
+          <h1 className="text-4xl font-bold">
+            {card.value}
+          </h1>
         </div>
       ))}
     </div>

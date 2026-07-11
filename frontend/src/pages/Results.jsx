@@ -1,24 +1,24 @@
 import Navbar from "../components/Navbar";
 import Sidebar from "../components/Sidebar";
+import DashboardCards from "../components/DashboardCards";
 import ComponentTable from "../components/ComponentTable";
 import DependencyGraph from "../components/DependencyGraph";
 import LicenseTable from "../components/LicenseTable";
 import VulnerabilityTable from "../components/VulnerabilityTable";
+import MaintenanceTable from "../components/MaintenanceTable";
+import AttackPath from "../components/AttackPath";
 function Results() {
   const analysis = JSON.parse(localStorage.getItem("analysis"));
 
   if (!analysis) {
     return (
       <div className="flex justify-center items-center h-screen">
-        <h1 className="text-3xl font-bold">
-          No SBOM Uploaded
+        <h1 className="text-3xl font-bold text-red-600">
+          No SBOM Analysis Found
         </h1>
       </div>
     );
   }
-
-  console.log("Analysis:", analysis);
-  console.log("Graph:", analysis.graph);
 
   return (
     <>
@@ -29,64 +29,94 @@ function Results() {
 
         <main className="flex-1 bg-slate-100 min-h-screen p-8">
 
+          {/* Page Title */}
           <h1 className="text-4xl font-bold mb-8">
-            Analysis Results
+            SBOM Analysis Report
           </h1>
 
-          {/* Summary Cards */}
+          {/* Application Information */}
+          <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
+            <h2 className="text-2xl font-bold mb-4">
+              Application Information
+            </h2>
 
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
-            <div className="bg-blue-600 text-white rounded-xl p-6 shadow-lg">
-              <h3 className="text-lg">Components</h3>
+              <div>
+                <span className="font-semibold">Application Name:</span>{" "}
+                {analysis.application?.name || "N/A"}
+              </div>
 
-              <p className="text-4xl font-bold mt-2">
-                {analysis.summary?.total_components ?? 0}
-              </p>
+              <div>
+                <span className="font-semibold">Application ID:</span>{" "}
+                {analysis.application?.app_id || "N/A"}
+              </div>
+
+              <div>
+                <span className="font-semibold">Criticality:</span>{" "}
+                {analysis.application?.criticality || "N/A"}
+              </div>
+
+              <div>
+                <span className="font-semibold">Business Owner:</span>{" "}
+                {analysis.application?.business_owner || "N/A"}
+              </div>
+
+              <div>
+                <span className="font-semibold">Department:</span>{" "}
+                {analysis.application?.department || "N/A"}
+              </div>
+
+              <div>
+                <span className="font-semibold">Deployment:</span>{" "}
+                {analysis.application?.deployment || "N/A"}
+              </div>
+
+              <div>
+                <span className="font-semibold">Language:</span>{" "}
+                {analysis.application?.language || "N/A"}
+              </div>
+
+              <div>
+                <span className="font-semibold">License Model:</span>{" "}
+                {analysis.application?.license_model || "N/A"}
+              </div>
+
             </div>
-
-            <div className="bg-green-600 text-white rounded-xl p-6 shadow-lg">
-              <h3 className="text-lg">Dependencies</h3>
-
-              <p className="text-4xl font-bold mt-2">
-                {analysis.summary?.total_dependencies ?? 0}
-              </p>
-            </div>
-
-            <div className="bg-red-600 text-white rounded-xl p-6 shadow-lg">
-              <h3 className="text-lg">Vulnerabilities</h3>
-
-              <p className="text-4xl font-bold mt-2">
-                {analysis.summary?.total_vulnerabilities ?? 0}
-              </p>
-            </div>
-
-            <div className="bg-yellow-500 text-white rounded-xl p-6 shadow-lg">
-              <h3 className="text-lg">High Risk</h3>
-
-              <p className="text-4xl font-bold mt-2">
-                {analysis.summary?.high_risk_packages ?? 0}
-              </p>
-            </div>
-
           </div>
 
-          {/* Components Table */}
+          {/* Dashboard Cards */}
+<DashboardCards summary={analysis.summary} />
 
-          <ComponentTable
-            components={analysis.components || []}
-          />
-<LicenseTable licenses={analysis.licenses} />
+{/* Components Table */}
+<ComponentTable
+  components={analysis.components || []}
+/>
 
-<VulnerabilityTable vulnerabilities={analysis.vulnerabilities} />
+{/* License Table */}
+<LicenseTable
+  licenses={analysis.licenses || []}
+/>
 
-          {/* Dependency Graph */}
+{/* Vulnerability Table */}
+<VulnerabilityTable
+  vulnerabilities={analysis.vulnerabilities || []}
+/>
 
-          <DependencyGraph
-            graph={analysis.graph}
-          />
-          
+{/* Dependency Graph */}
+<DependencyGraph
+  graph={analysis.graph}
+/>
+<DependencyGraph
+  graph={analysis.graph}
+/>
 
+<AttackPath
+  attackPaths={analysis.attack_paths || []}
+/>
+<MaintenanceTable
+    maintenance={analysis.maintenance || []}
+/>
         </main>
       </div>
     </>
