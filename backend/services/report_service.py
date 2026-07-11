@@ -1,8 +1,14 @@
 from services.parser import parse_sbom
 from services.license_checker import check_licenses
 from services.vulnerability_service import check_vulnerabilities
-from services.dependency_graph import build_dependency_graph, graph_to_json
-
+from services.dependency_graph import (
+    build_dependency_graph,
+    graph_to_json,
+    load_transitive_dependencies,
+    find_attack_paths
+)
+from services.risk_score import calculate_risk_score
+from services.maintenance_checker import check_maintenance
 import json
 import os
 
@@ -32,7 +38,23 @@ def generate_report(filepath):
 
     vulnerabilities = check_vulnerabilities(components)
 
+    maintenance = check_maintenance(components)
+
+    risk = calculate_risk_score(
+    vulnerabilities,
+    licenses,
+    maintenance,
+    application
+)
+
     graph = build_dependency_graph(dependencies)
+
+    graph = load_transitive_dependencies(graph)
+
+    attack_paths = find_attack_paths(
+    graph,
+    vulnerabilities
+)
 
     return {
 
@@ -42,28 +64,36 @@ def generate_report(filepath):
 
         "summary": {
 
-            "total_components": len(components),
+    "risk_score": risk["risk_score"],
 
-            "total_dependencies": len(dependencies),
+    "risk_level": risk["risk_level"],
 
-            "total_vulnerabilities": sum(
-                len(v["vulnerabilities"])
-                for v in vulnerabilities
-            ),
+    "total_components": len(components),
 
-            "high_risk_packages": sum(
-                1
-                for l in licenses
-                if l["risk"] in ["HIGH", "CRITICAL"]
-            )
+    "total_dependencies": len(dependencies),
 
-        },
+    "total_vulnerabilities": sum(
+        len(v["vulnerabilities"])
+        for v in vulnerabilities
+    ),
+
+    "high_risk_packages": sum(
+        1
+        for l in licenses
+        if l["risk"] in ["HIGH", "CRITICAL"]
+    )
+
+},
 
         "components": components,
 
         "dependencies": dependencies,
 
+        "maintenance": maintenance,
+
         "graph": graph_to_json(graph),
+
+        "attack_paths": attack_paths,
 
         "licenses": licenses,
 
