@@ -1,7 +1,7 @@
 import Navbar from "../components/Navbar";
 import Sidebar from "../components/Sidebar";
 import DashboardCards from "../components/DashboardCards";
-
+import ComponentTable from "../components/ComponentTable";
 function Dashboard() {
   return (
     <>
@@ -18,6 +18,7 @@ function Dashboard() {
           </h2>
 
           <DashboardCards />
+          <ComponentTable />
 
         </main>
 
