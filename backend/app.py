@@ -6,11 +6,7 @@ from services.dependency_graph import build_dependency_graph, graph_to_json
 from services.vulnerability_service import check_vulnerabilities
 from config import Config
 from services.parser import parse_sbom
-
-from flask import Flask
-from flask_cors import CORS
-
-from routes.upload import upload_bp
+from services.report_service import generate_report
 
 latest_sbom = None
 app = Flask(__name__)
@@ -22,6 +18,27 @@ UPLOAD_FOLDER = Config.UPLOAD_FOLDER
 
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
+@app.route("/analyze", methods=["POST"])
+def analyze():
+
+    if "file" not in request.files:
+        return jsonify({"error": "No file uploaded"}), 400
+
+    file = request.files["file"]
+
+    filepath = os.path.join(
+        UPLOAD_FOLDER,
+        file.filename
+    )
+
+    file.save(filepath)
+
+    global latest_sbom
+    latest_sbom = parse_sbom(filepath)
+
+    report = generate_report(filepath)
+
+    return jsonify(report)
 
 @app.route("/")
 def home():

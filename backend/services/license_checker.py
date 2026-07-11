@@ -1,15 +1,16 @@
 import json
-import os
 
-DB_PATH = os.path.join(
-    os.path.dirname(__file__),
-    "../sample_data/licenses.json"
-)
+POLICY_FILE = "sample_data/license_policy.json"
+
+
+def load_policy():
+    with open(POLICY_FILE, "r") as file:
+        return json.load(file)
+
 
 def check_licenses(components):
 
-    with open(DB_PATH, "r") as file:
-        database = json.load(file)
+    policy = load_policy()
 
     results = []
 
@@ -17,22 +18,18 @@ def check_licenses(components):
 
         licenses = component.get("licenses", [])
 
+        if not licenses:
+            licenses = ["Unknown"]
+
         for license_name in licenses:
 
-            info = database.get(
-                license_name,
-                {
-                    "risk": "UNKNOWN",
-                    "compatible": False
-                }
-            )
+            risk = policy.get(license_name, "Unknown")
 
             results.append({
-                "package": component["name"],
+                "component": component["name"],
                 "version": component["version"],
                 "license": license_name,
-                "risk": info["risk"],
-                "compatible": info["compatible"]
+                "risk": risk
             })
 
     return results
