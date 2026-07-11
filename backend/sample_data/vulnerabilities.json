@@ -1,0 +1,15 @@
+{
+    "Flask": {
+        "3.0.3": []
+    },
+    "Requests": {
+        "2.32.3": [
+            {
+                "cve": "CVE-2024-35195",
+                "severity": "HIGH",
+                "cvss": 8.1,
+                "description": "Certificate verification vulnerability."
+            }
+        ]
+    }
+}
