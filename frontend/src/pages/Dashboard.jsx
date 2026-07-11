@@ -1,5 +1,6 @@
 import Navbar from "../components/Navbar";
 import Sidebar from "../components/Sidebar";
+import DashboardCards from "../components/DashboardCards";
 
 function Dashboard() {
   return (
@@ -9,10 +10,17 @@ function Dashboard() {
       <div style={{ display: "flex" }}>
         <Sidebar />
 
-        <div style={{ padding: "30px", flex: 1 }}>
-          <h1>Dashboard</h1>
+        <div
+          style={{
+            flex: 1,
+            padding: "30px",
+            background: "#f5f7fb",
+            minHeight: "100vh",
+          }}
+        >
+          <h1>SBOM Security Dashboard</h1>
 
-          <p>Welcome to the SBOM Analyzer Dashboard.</p>
+          <DashboardCards />
         </div>
       </div>
     </>
