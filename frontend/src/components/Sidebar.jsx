@@ -1,24 +1,40 @@
 import { Link } from "react-router-dom";
+import {
+  LayoutDashboard,
+  Upload,
+  Network,
+  FileText,
+} from "lucide-react";
 
 function Sidebar() {
   return (
-    <div
-      style={{
-        width: "230px",
-        background: "#111827",
-        color: "white",
-        height: "calc(100vh - 60px)",
-        padding: "20px",
-      }}
-    >
-      <h3>Menu</h3>
+    <aside className="w-64 bg-slate-800 text-white min-h-screen p-5">
+      <h2 className="text-xl font-semibold mb-8">Navigation</h2>
 
-      <p><Link to="/" style={{ color: "white" }}>Dashboard</Link></p>
+      <nav className="flex flex-col gap-4">
 
-      <p><Link to="/upload" style={{ color: "white" }}>Upload SBOM</Link></p>
+        <Link to="/" className="flex items-center gap-3 hover:text-cyan-400">
+          <LayoutDashboard size={20}/>
+          Dashboard
+        </Link>
 
-      <p><Link to="/report" style={{ color: "white" }}>Reports</Link></p>
-    </div>
+        <Link to="/upload" className="flex items-center gap-3 hover:text-cyan-400">
+          <Upload size={20}/>
+          Upload SBOM
+        </Link>
+
+        <Link to="/graph" className="flex items-center gap-3 hover:text-cyan-400">
+          <Network size={20}/>
+          Dependency Graph
+        </Link>
+
+        <Link to="/report" className="flex items-center gap-3 hover:text-cyan-400">
+          <FileText size={20}/>
+          Reports
+        </Link>
+
+      </nav>
+    </aside>
   );
 }
 

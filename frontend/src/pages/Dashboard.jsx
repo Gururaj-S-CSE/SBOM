@@ -7,21 +7,20 @@ function Dashboard() {
     <>
       <Navbar />
 
-      <div style={{ display: "flex" }}>
+      <div className="flex">
+
         <Sidebar />
 
-        <div
-          style={{
-            flex: 1,
-            padding: "30px",
-            background: "#f5f7fb",
-            minHeight: "100vh",
-          }}
-        >
-          <h1>SBOM Security Dashboard</h1>
+        <main className="flex-1 bg-slate-100 min-h-screen p-8">
+
+          <h2 className="text-3xl font-bold mb-8">
+            Dashboard
+          </h2>
 
           <DashboardCards />
-        </div>
+
+        </main>
+
       </div>
     </>
   );
