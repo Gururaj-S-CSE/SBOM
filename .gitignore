@@ -1,9 +1,17 @@
-.venv/
-venv/
-__pycache__/
-*.pyc
+# Node modules
+frontend/node_modules/
+
+# Vite
+frontend/dist/
+
+# Python
 backend/venv/
-.venv/
-venv/
-__pycache__/
+backend/__pycache__/
 *.pyc
+
+# Environment
+.env
+
+# OS files
+.DS_Store
+Thumbs.db
