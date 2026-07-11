@@ -3,43 +3,70 @@ from services.license_checker import check_licenses
 from services.vulnerability_service import check_vulnerabilities
 from services.dependency_graph import build_dependency_graph, graph_to_json
 
+import json
+import os
+
+APP_PATH = os.path.join(
+    os.path.dirname(__file__),
+    "..",
+    "sample_data",
+    "applications.json"
+)
+
+with open(APP_PATH) as f:
+    APPLICATIONS = json.load(f)
+
+application = APPLICATIONS[0]
 
 def generate_report(filepath):
 
     data = parse_sbom(filepath)
 
-    licenses = check_licenses(
-        data["components"]
-    )
+    # Extract parsed data
+    metadata = data["metadata"]
+    components = data["components"]
+    dependencies = data["dependencies"]
 
-    vulnerabilities = check_vulnerabilities(
-        data["components"]
-    )
+    # Run analysis
+    licenses = check_licenses(components)
 
-    graph = build_dependency_graph(
-        data["dependencies"]
-    )
+    vulnerabilities = check_vulnerabilities(components)
+
+    graph = build_dependency_graph(dependencies)
 
     return {
-    "metadata": data["metadata"],
 
-    "summary": {
-        "total_components": len(data["components"]),
-        "total_dependencies": len(data["dependencies"]),
-        "total_vulnerabilities": sum(
-            len(v["vulnerabilities"])
-            for v in vulnerabilities
-        ),
-        "high_risk_packages": sum(
-            1
-            for l in licenses
-            if l["risk"] == "High"
-        )
-    },
+        "application": application,
 
-    "components": data["components"],
-    "dependencies": data["dependencies"],
-    "licenses": licenses,
-    "vulnerabilities": vulnerabilities,
-    "graph": graph_to_json(graph)
-}
+        "metadata": metadata,
+
+        "summary": {
+
+            "total_components": len(components),
+
+            "total_dependencies": len(dependencies),
+
+            "total_vulnerabilities": sum(
+                len(v["vulnerabilities"])
+                for v in vulnerabilities
+            ),
+
+            "high_risk_packages": sum(
+                1
+                for l in licenses
+                if l["risk"] in ["HIGH", "CRITICAL"]
+            )
+
+        },
+
+        "components": components,
+
+        "dependencies": dependencies,
+
+        "graph": graph_to_json(graph),
+
+        "licenses": licenses,
+
+        "vulnerabilities": vulnerabilities
+
+    }

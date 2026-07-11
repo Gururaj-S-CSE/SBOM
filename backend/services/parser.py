@@ -41,5 +41,6 @@ def parse_sbom(file_path):
             "version": sbom.get("version")
         },
         "components": components,
-        "dependencies": dependencies
+        "dependencies": dependencies,
+        "application": sbom.get("metadata", {})
     }

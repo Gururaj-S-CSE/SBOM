@@ -1,35 +1,63 @@
 import json
+import os
 
-POLICY_FILE = "sample_data/license_policy.json"
+LICENSE_PATH = os.path.join(
+    os.path.dirname(__file__),
+    "..",
+    "sample_data",
+    "license_rules.json"
+)
 
-
-def load_policy():
-    with open(POLICY_FILE, "r") as file:
-        return json.load(file)
+with open(LICENSE_PATH) as f:
+    LICENSE_RULES = json.load(f)
 
 
 def check_licenses(components):
 
-    policy = load_policy()
-
-    results = []
+    output = []
 
     for component in components:
 
-        licenses = component.get("licenses", [])
+        license_name = "UNKNOWN"
 
-        if not licenses:
-            licenses = ["Unknown"]
+        if component.get("licenses"):
 
-        for license_name in licenses:
+            license_name = component["licenses"][0]
 
-            risk = policy.get(license_name, "Unknown")
+        rule = next(
 
-            results.append({
+            (
+                x
+                for x in LICENSE_RULES
+                if x["license"] == license_name
+            ),
+
+            None
+
+        )
+
+        if rule:
+
+            output.append({
+
                 "component": component["name"],
-                "version": component["version"],
                 "license": license_name,
-                "risk": risk
+                "risk": rule["risk_level"],
+                "compatible": rule["compatible_with_proprietary"],
+                "notes": rule["notes"]
+
             })
 
-    return results
+        else:
+
+            output.append({
+
+                "component": component["name"],
+                "license": license_name,
+                "risk": "UNKNOWN",
+                "compatible": False,
+                "notes": "License not found"
+
+            })
+
+    return output

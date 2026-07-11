@@ -1,9 +1,0 @@
-{
-    "MIT": "Low",
-    "Apache-2.0": "Low",
-    "BSD-3-Clause": "Low",
-    "MPL-2.0": "Medium",
-    "LGPL-2.1": "Medium",
-    "GPL-3.0": "High",
-    "AGPL-3.0": "Critical"
-}
