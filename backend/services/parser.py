@@ -1,22 +1,51 @@
 import json
 
 def parse_sbom(file_path):
-    """
-    Parse CycloneDX JSON SBOM.
-    Returns a list of components.
-    """
 
     with open(file_path, "r") as file:
-        data = json.load(file)
+        sbom = json.load(file)
 
     components = []
 
-    for component in data.get("components", []):
+    for component in sbom.get("components", []):
+
+        licenses = []
+
+        for item in component.get("licenses", []):
+
+            if "license" in item:
+                licenses.append(
+                    item["license"].get("id", "Unknown")
+                )
+
         components.append({
+
             "name": component.get("name"),
+
             "version": component.get("version"),
+
             "type": component.get("type"),
-            "license": component.get("licenses", [])
+
+            "licenses": licenses
+
         })
 
-    return components
+    dependencies = []
+
+    for dependency in sbom.get("dependencies", []):
+
+        dependencies.append({
+
+            "component": dependency.get("ref"),
+
+            "depends_on": dependency.get("dependsOn", [])
+
+        })
+
+    return {
+
+        "components": components,
+
+        "dependencies": dependencies
+
+    }
