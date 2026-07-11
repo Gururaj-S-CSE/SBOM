@@ -7,6 +7,11 @@ from services.vulnerability_service import check_vulnerabilities
 from config import Config
 from services.parser import parse_sbom
 
+from flask import Flask
+from flask_cors import CORS
+
+from routes.upload import upload_bp
+
 latest_sbom = None
 app = Flask(__name__)
 CORS(app)
