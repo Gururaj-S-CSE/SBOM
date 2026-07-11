@@ -1,56 +1,57 @@
-import {
-  ReactFlow,
+import ReactFlow, {
   Background,
   Controls,
 } from "reactflow";
 
 import "reactflow/dist/style.css";
 
-const nodes = [
-  {
-    id: "1",
-    data: { label: "SBOM App" },
-    position: { x: 250, y: 0 },
-  },
+function DependencyGraph({ graph }) {
 
-  {
-    id: "2",
-    data: { label: "React" },
-    position: { x: 100, y: 150 },
-  },
+  if (!graph) {
+    return null;
+  }
 
-  {
-    id: "3",
-    data: { label: "Axios" },
-    position: { x: 250, y: 150 },
-  },
+  // Convert backend nodes into React Flow nodes
+  const nodes = (graph.nodes || []).map((node, index) => ({
+    id: String(node.id),
 
-  {
-    id: "4",
-    data: { label: "Lodash" },
-    position: { x: 400, y: 150 },
-  },
-];
+    data: {
+      label: node.label || node.id,
+    },
 
-const edges = [
-  { id: "e1", source: "1", target: "2" },
-  { id: "e2", source: "1", target: "3" },
-  { id: "e3", source: "1", target: "4" },
-];
+    position: {
+      x: 200 * (index % 4),
+      y: 150 * Math.floor(index / 4),
+    },
+  }));
 
-function DependencyGraph() {
+  // Convert backend edges into React Flow edges
+  const edges = (graph.edges || []).map((edge, index) => ({
+    id: `e${index}`,
+    source: String(edge.source),
+    target: String(edge.target),
+  }));
+
   return (
-    <div className="bg-white rounded-xl shadow-lg p-5 mt-8">
+    <div className="bg-white rounded-xl shadow-lg p-6 mt-8">
+
       <h2 className="text-2xl font-bold mb-5">
         Dependency Graph
       </h2>
 
-      <div style={{ height: 450 }}>
-        <ReactFlow nodes={nodes} edges={edges} fitView>
+      <div style={{ height: "500px" }}>
+
+        <ReactFlow
+          nodes={nodes}
+          edges={edges}
+          fitView
+        >
           <Background />
           <Controls />
         </ReactFlow>
+
       </div>
+
     </div>
   );
 }

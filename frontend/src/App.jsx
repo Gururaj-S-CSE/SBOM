@@ -4,7 +4,7 @@ import Dashboard from "./pages/Dashboard";
 import Upload from "./pages/Upload";
 import Report from "./pages/Report";
 import Graph from "./pages/Graph";
-
+import Results from "./pages/Results";
 function App() {
   return (
     <BrowserRouter>
@@ -13,6 +13,7 @@ function App() {
         <Route path="/upload" element={<Upload />} />
         <Route path="/graph" element={<Graph />} />
         <Route path="/report" element={<Report />} />
+        <Route path="/results" element={<Results />} />
       </Routes>
     </BrowserRouter>
   );

@@ -52,4 +52,8 @@ __pycache__/
 *.pytest_cache/
 
 # Python environment
+<<<<<<< HEAD
 .env
+=======
+.env
+>>>>>>> 15238f0 (no frontend change)
