@@ -80,6 +80,9 @@ def find_attack_paths(graph, vulnerable_components):
         if not vulnerable["has_vulnerabilities"]:
             continue
 
+        if target not in graph:
+            continue
+
         for node in graph.nodes():
 
             if node == target:
