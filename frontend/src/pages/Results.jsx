@@ -29,7 +29,7 @@ function Results() {
       <div className="flex">
         <Sidebar />
 
-        <main className="flex-1 bg-slate-100 min-h-screen p-8">
+       <main className="flex-1 bg-gray-50 min-h-screen p-10">
 
           {/* Page Title */}
           <h1 className="text-4xl font-bold mb-8">
@@ -37,74 +37,121 @@ function Results() {
           </h1>
 
           {/* Application Information */}
-          <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
-            <h2 className="text-2xl font-bold mb-4">
-              Application Information
-            </h2>
+          {/* Application Information */}
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+<div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-8 mb-8">
 
-              <div>
-                <span className="font-semibold">Application Name:</span>{" "}
-                {analysis.application?.name || "N/A"}
-              </div>
+  <div className="flex items-center justify-between mb-6">
 
-              <div>
-                <span className="font-semibold">Application ID:</span>{" "}
-                {analysis.application?.app_id || "N/A"}
-              </div>
+    <div>
 
-              <div>
-                <span className="font-semibold">Criticality:</span>{" "}
-                {analysis.application?.criticality || "N/A"}
-              </div>
+      <h2 className="text-3xl font-bold text-gray-900">
+        {analysis.application?.name || "Unknown Application"}
+      </h2>
 
-              <div>
-                <span className="font-semibold">Business Owner:</span>{" "}
-                {analysis.application?.business_owner || "N/A"}
-              </div>
+      <p className="text-gray-500 mt-1">
+        Application ID: {analysis.application?.app_id || "N/A"}
+      </p>
 
-              <div>
-                <span className="font-semibold">Department:</span>{" "}
-                {analysis.application?.department || "N/A"}
-              </div>
+    </div>
 
-              <div>
-                <span className="font-semibold">Deployment:</span>{" "}
-                {analysis.application?.deployment || "N/A"}
-              </div>
+    <span
+      className={`px-4 py-2 rounded-full text-sm font-semibold ${
+        analysis.application?.criticality === "HIGH"
+          ? "bg-red-100 text-red-700"
+          : analysis.application?.criticality === "MEDIUM"
+          ? "bg-yellow-100 text-yellow-700"
+          : "bg-green-100 text-green-700"
+      }`}
+    >
+      {analysis.application?.criticality}
+    </span>
 
-              <div>
-                <span className="font-semibold">Language:</span>{" "}
-                {analysis.application?.language || "N/A"}
-              </div>
+  </div>
 
-              <div>
-                <span className="font-semibold">License Model:</span>{" "}
-                {analysis.application?.license_model || "N/A"}
-              </div>
+  <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
 
-            </div>
-          </div>
+    <div className="bg-gray-50 rounded-xl p-4">
+
+      <p className="text-gray-500 text-sm">
+        Business Owner
+      </p>
+
+      <p className="font-semibold mt-1">
+        {analysis.application?.business_owner}
+      </p>
+
+    </div>
+
+    <div className="bg-gray-50 rounded-xl p-4">
+
+      <p className="text-gray-500 text-sm">
+        Department
+      </p>
+
+      <p className="font-semibold mt-1">
+        {analysis.application?.department}
+      </p>
+
+    </div>
+
+    <div className="bg-gray-50 rounded-xl p-4">
+
+      <p className="text-gray-500 text-sm">
+        Deployment
+      </p>
+
+      <p className="font-semibold mt-1">
+        {analysis.application?.deployment}
+      </p>
+
+    </div>
+
+    <div className="bg-gray-50 rounded-xl p-4">
+
+      <p className="text-gray-500 text-sm">
+        Language
+      </p>
+
+      <p className="font-semibold mt-1">
+        {analysis.application?.language}
+      </p>
+
+    </div>
+
+    <div className="bg-gray-50 rounded-xl p-4">
+
+      <p className="text-gray-500 text-sm">
+        License Model
+      </p>
+
+      <p className="font-semibold mt-1">
+        {analysis.application?.license_model}
+      </p>
+
+    </div>
+
+  </div>
+
+</div>
 
           {/* Dashboard Cards */}
 <DashboardCards summary={analysis.summary} />
 <AlertDashboard
     vulnerabilities={analysis.vulnerabilities}
 />
-<RemediationPlaybook
-    vulnerabilities={analysis.vulnerabilities}
-/>
+
 {/* Components Table */}
 <ComponentTable
   components={analysis.components || []}
 />
-
-{/* License Table */}
-<LicenseTable
-  licenses={analysis.licenses || []}
+{/* Dependency Graph */}
+<DependencyGraph
+  graph={analysis.graph}
 />
-
+<AttackPath
+  attackPaths={analysis.attack_paths || []}
+/>
 {/* Vulnerability Table */}
 <VulnerabilityTable
   vulnerabilities={analysis.vulnerabilities || []}
@@ -112,21 +159,22 @@ function Results() {
 <RemediationPlaybook
   vulnerabilities={analysis.vulnerabilities || []}
 />
-
-{/* Dependency Graph */}
-<DependencyGraph
-  graph={analysis.graph}
-/>
-<DependencyGraph
-  graph={analysis.graph}
-/>
-
-<AttackPath
-  attackPaths={analysis.attack_paths || []}
-/>
 <MaintenanceTable
     maintenance={analysis.maintenance || []}
 />
+{/* License Table */}
+<LicenseTable
+  licenses={analysis.licenses || []}
+/>
+
+
+
+
+
+
+
+
+
         </main>
       </div>
     </>
