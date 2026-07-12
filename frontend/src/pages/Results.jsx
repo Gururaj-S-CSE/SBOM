@@ -7,6 +7,8 @@ import LicenseTable from "../components/LicenseTable";
 import VulnerabilityTable from "../components/VulnerabilityTable";
 import MaintenanceTable from "../components/MaintenanceTable";
 import AttackPath from "../components/AttackPath";
+import AlertDashboard from "../components/AlertDashboard";
+import RemediationPlaybook from "../components/RemediationPlaybook";
 function Results() {
   const analysis = JSON.parse(localStorage.getItem("analysis"));
 
@@ -87,7 +89,12 @@ function Results() {
 
           {/* Dashboard Cards */}
 <DashboardCards summary={analysis.summary} />
-
+<AlertDashboard
+    vulnerabilities={analysis.vulnerabilities}
+/>
+<RemediationPlaybook
+    vulnerabilities={analysis.vulnerabilities}
+/>
 {/* Components Table */}
 <ComponentTable
   components={analysis.components || []}
@@ -100,6 +107,9 @@ function Results() {
 
 {/* Vulnerability Table */}
 <VulnerabilityTable
+  vulnerabilities={analysis.vulnerabilities || []}
+/>
+<RemediationPlaybook
   vulnerabilities={analysis.vulnerabilities || []}
 />
 
