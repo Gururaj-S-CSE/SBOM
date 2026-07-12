@@ -52,7 +52,7 @@ function Report() {
                 </div>
                 <button
                   onClick={handlePrint}
-                  className="inline-flex items-center gap-2 bg-indigo-650 hover:bg-indigo-700 text-white text-xs font-semibold px-4 py-2 rounded-xl transition shadow-sm cursor-pointer"
+                  className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold px-4 py-2 rounded-xl transition shadow-sm cursor-pointer"
                 >
                   <Printer size={14} />
                   Print Report
@@ -121,7 +121,7 @@ function Report() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
                   <div className="bg-slate-50 border border-slate-200/40 rounded-xl p-5 text-center flex flex-col justify-between print:border-slate-200">
                     <span className="text-slate-400 font-semibold text-[10px] uppercase tracking-wider block">Supply Chain Risk Score</span>
-                    <p className="text-4xl font-extrabold text-indigo-650 my-2">{analysis.summary?.risk_score ?? 0}</p>
+                    <p className="text-4xl font-extrabold text-indigo-600 my-2">{analysis.summary?.risk_score ?? 0}</p>
                     <span className="text-[10px] text-slate-450">Scale: 0 (Secure) to 100 (Critical)</span>
                   </div>
 

@@ -97,7 +97,7 @@ function UploadBox() {
       if (error.response) {
         alert(error.response.data.error || "Backend Analysis Error");
       } else {
-        alert("Unable to connect to backend server. Please verify it is running on port 5000.");
+        alert("Unable to connect to backend server. Please verify it is running on port 5001.");
       }
     } finally {
       setLoading(false);

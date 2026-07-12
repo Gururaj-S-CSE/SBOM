@@ -26,7 +26,7 @@ function RemediationPlaybook({ vulnerabilities = [] }) {
   return (
     <div className="bg-white rounded-2xl border border-slate-200/60 shadow-sm p-6">
       <div className="flex items-center gap-2 mb-6 pb-4 border-b border-slate-100">
-        <div className="bg-indigo-50 text-indigo-650 p-2 rounded-lg border border-indigo-100/50">
+        <div className="bg-indigo-50 text-indigo-600 p-2 rounded-lg border border-indigo-100/50">
           <Wrench size={16} />
         </div>
         <div>
@@ -80,7 +80,7 @@ function RemediationPlaybook({ vulnerabilities = [] }) {
                       </span>
                       <div className="w-20 h-2 bg-slate-200/60 rounded-full overflow-hidden">
                         <div
-                          className="h-full bg-indigo-650 rounded-full transition-all duration-300"
+                          className="h-full bg-indigo-600 rounded-full transition-all duration-300"
                           style={{ width: `${pct}%` }}
                         ></div>
                       </div>

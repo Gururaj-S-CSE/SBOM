@@ -52,7 +52,7 @@ function DependencyGraph({ graph }) {
   return (
     <div className="bg-white rounded-2xl border border-slate-200/60 shadow-sm p-6 overflow-hidden">
       <div className="flex items-center gap-2 mb-5 pb-4 border-b border-slate-100">
-        <div className="bg-indigo-50 text-indigo-650 p-2 rounded-lg border border-indigo-100/50">
+        <div className="bg-indigo-50 text-indigo-600 p-2 rounded-lg border border-indigo-100/50">
           <Network size={16} />
         </div>
         <div>
