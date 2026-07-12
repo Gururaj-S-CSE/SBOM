@@ -37,60 +37,56 @@ function DashboardCards({ summary }) {
     {
       title: "Risk Score",
       value: summary.risk_score,
-      icon: <Gauge size={26} />,
+      icon: <Gauge size={20} />,
     },
     {
       title: "Risk Level",
       value: summary.risk_level,
-      icon: <ShieldAlert size={26} />,
+      icon: <ShieldAlert size={20} />,
     },
     {
       title: "Components",
       value: summary.total_components,
-      icon: <Boxes size={26} />,
+      icon: <Boxes size={20} />,
     },
     {
       title: "Dependencies",
       value: summary.total_dependencies,
-      icon: <Network size={26} />,
+      icon: <Network size={20} />,
     },
     {
       title: "Vulnerabilities",
       value: summary.total_vulnerabilities,
-      icon: <AlertTriangle size={26} />,
+      icon: <AlertTriangle size={20} />,
     },
     {
       title: "High Risk Packages",
       value: summary.high_risk_packages,
-      icon: <TriangleAlert size={26} />,
+      icon: <TriangleAlert size={20} />,
     },
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-6 gap-6 mb-8">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-5 mb-8">
       {cards.map((card) => (
         <div
           key={card.title}
-          className="bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 p-6"
+          className="bg-white rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition-all duration-200 p-5 flex flex-col justify-between min-h-[110px]"
         >
-          <div className="flex justify-between items-center mb-5">
-
-            <span className="text-gray-500 text-sm font-medium">
+          <div className="flex items-start justify-between gap-3 min-w-0">
+            <span className="text-slate-450 text-[10px] font-bold uppercase tracking-wider block leading-tight mt-1.5 break-words">
               {card.title}
             </span>
-
             <div
-              className={`p-3 rounded-xl ${getBadgeColor(card.title)}`}
+              className={`p-2 rounded-xl shrink-0 flex items-center justify-center ${getBadgeColor(card.title)}`}
             >
               {card.icon}
             </div>
-
           </div>
 
-          <h2 className="text-3xl font-bold text-gray-900">
+          <h2 className="text-2xl font-extrabold text-slate-850 mt-3 leading-none">
             {card.value}
           </h2>
-
         </div>
       ))}
     </div>

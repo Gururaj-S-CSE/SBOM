@@ -2,6 +2,7 @@ import ReactFlow, {
   Background,
   Controls,
   MiniMap,
+  MarkerType,
 } from "reactflow";
 import { Network, Box } from "lucide-react";
 import "reactflow/dist/style.css";
@@ -47,6 +48,10 @@ function DependencyGraph({ graph }) {
     type: "smoothstep",
     animated: true,
     style: { stroke: "#a5b4fc", strokeWidth: 1.5 },
+    markerEnd: {
+      type: MarkerType.ArrowClosed,
+      color: "#a5b4fc",
+    },
   }));
 
   return (
