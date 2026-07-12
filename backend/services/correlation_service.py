@@ -2,6 +2,8 @@ import os
 import json
 from services.parser import parse_sbom
 from services.vulnerability_service import check_vulnerabilities
+from services.license_checker import check_licenses
+from services.maintenance_checker import check_maintenance
 
 # Default SBOM component templates by application ID
 DEFAULT_COMPONENTS = {
@@ -103,8 +105,18 @@ def get_cross_system_correlations(upload_folder):
         # Analyze vulnerabilities for this app's components
         vuln_results = check_vulnerabilities(components)
         
+        # Analyze licenses
+        licenses = check_licenses(components)
+        high_risk_licenses = sum(1 for l in licenses if l["risk"] in ["HIGH", "CRITICAL"])
+        gpl_found = any("gpl" in str(l["license"]).lower() for l in licenses)
+        
+        # Analyze maintenance status
+        maintenance = check_maintenance(components)
+        unmaintained_count = sum(1 for m in maintenance if m["maintenance"] == "UNMAINTAINED")
+        
         total_vulns = 0
         high_critical_vulns = 0
+        vulnerable_packages_count = 0
         
         for res in vuln_results:
             comp_name = res["component"]
@@ -114,6 +126,8 @@ def get_cross_system_correlations(upload_folder):
             
             cve_ids = [v["cve_id"] for v in vulns]
             total_vulns += len(vulns)
+            if has_vulns:
+                vulnerable_packages_count += 1
             
             # Determine highest severity for this package
             max_sev = "NONE"
@@ -148,6 +162,15 @@ def get_cross_system_correlations(upload_folder):
                 "version": version
             })
 
+        # Calculate Compliance Score (starts at 100%, drops based on risks)
+        score = 100
+        score -= min(vulnerable_packages_count * 15, 50)
+        score -= min(high_risk_licenses * 15, 30)
+        score -= min(unmaintained_count * 10, 20)
+        if gpl_found:
+            score -= 10
+        score = max(0, min(100, score))
+
         app_vulnerability_summary[app_id] = {
             "app_id": app_id,
             "app_name": app["name"],
@@ -155,7 +178,12 @@ def get_cross_system_correlations(upload_folder):
             "business_owner": app["business_owner"],
             "total_dependencies": len(components),
             "total_vulnerabilities": total_vulns,
-            "high_critical_vulnerabilities": high_critical_vulns
+            "high_critical_vulnerabilities": high_critical_vulns,
+            "license_compliant": high_risk_licenses == 0,
+            "vulnerable_packages_count": vulnerable_packages_count,
+            "unmaintained_packages_count": unmaintained_count,
+            "gpl_found": gpl_found,
+            "compliance_score": score
         }
 
     # Convert dependencies map to a list sorted by package name

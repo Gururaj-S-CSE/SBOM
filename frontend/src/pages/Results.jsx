@@ -549,56 +549,123 @@ function Results() {
                       </div>
                     </div>
 
-                    {/* Systems Posture Table */}
-                    <div className="bg-white rounded-2xl border border-slate-200/60 shadow-sm overflow-hidden">
-                      <div className="px-6 py-5 border-b border-slate-100">
+                    {/* Application Compliance Scorecards */}
+                    <div className="space-y-4">
+                      <div>
                         <h3 className="text-sm font-bold text-slate-800">
-                          Cross-Application Vulnerability Posture
+                          Application Compliance Scorecards
                         </h3>
                         <p className="text-[10px] text-slate-400 font-medium">
-                          Overview of the relative risk profile and library counts for all monitored catalog applications
+                          Real-time compliance gap analysis auditing security, legal copyleft exposure, and catalog maintenance
                         </p>
                       </div>
 
-                      <div className="overflow-x-auto">
-                        <table className="w-full border-collapse text-left">
-                          <thead>
-                            <tr className="bg-slate-50 border-b border-slate-200/60 text-[10px] text-slate-400 font-bold uppercase tracking-wider">
-                              <th className="px-6 py-3.5">App Name</th>
-                              <th className="px-6 py-3.5">ID</th>
-                              <th className="px-6 py-3.5">Criticality</th>
-                              <th className="px-6 py-3.5">Total Dependencies</th>
-                              <th className="px-6 py-3.5">Total CVEs</th>
-                              <th className="px-6 py-3.5">High/Critical CVEs</th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-slate-150 text-xs text-slate-650">
-                            {correlationData.applications.map((app) => (
-                              <tr key={app.app_id} className="hover:bg-slate-50/50 transition-colors">
-                                <td className="px-6 py-3.5 font-bold text-slate-800">{app.app_name}</td>
-                                <td className="px-6 py-3.5 font-mono text-[10px] text-slate-450">{app.app_id}</td>
-                                <td className="px-6 py-3.5">
-                                  <span className={`inline-flex items-center gap-1 font-bold text-[9px] px-2 py-0.5 border rounded-md ${
-                                    app.criticality === "CRITICAL"
-                                      ? "bg-rose-50 text-rose-700 border-rose-100"
-                                      : app.criticality === "HIGH"
-                                      ? "bg-orange-50 text-orange-700 border-orange-100"
-                                      : "bg-amber-50 text-amber-700 border-amber-100"
-                                  }`}>
-                                    {app.criticality}
+                      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                        {correlationData.applications.map((app) => (
+                          <div key={app.app_id} className="bg-white rounded-2xl border border-slate-200/60 shadow-sm p-5 space-y-4 flex flex-col justify-between hover:shadow-md transition-all duration-200">
+                            
+                            {/* Card Header */}
+                            <div className="flex justify-between items-start gap-3">
+                              <div>
+                                <h4 className="font-bold text-slate-800 text-sm">{app.app_name}</h4>
+                                <span className="text-[9px] text-slate-400 font-mono mt-0.5 block">{app.app_id} • Owner: {app.business_owner}</span>
+                              </div>
+                              <div className="text-right">
+                                <span className={`text-[9px] font-bold px-2 py-0.5 rounded border uppercase ${
+                                  app.compliance_score >= 80
+                                    ? "bg-emerald-50 text-emerald-700 border-emerald-100"
+                                    : app.compliance_score >= 50
+                                    ? "bg-amber-50 text-amber-700 border-amber-100"
+                                    : "bg-rose-50 text-rose-700 border-rose-100"
+                                }`}>
+                                  Score: {app.compliance_score}%
+                                </span>
+                              </div>
+                            </div>
+
+                            {/* Compliance Indicators list */}
+                            <div className="grid grid-cols-2 gap-3 pt-2 text-[10px]">
+                              
+                              {/* 1. License Compliance */}
+                              <div className="flex items-center gap-1.5 font-medium">
+                                {app.license_compliant ? (
+                                  <span className="text-emerald-600 flex items-center gap-1">
+                                    <span className="font-bold text-sm">✓</span>
+                                    License Compliant
                                   </span>
-                                </td>
-                                <td className="px-6 py-3.5 font-semibold text-slate-800">{app.total_dependencies}</td>
-                                <td className="px-6 py-3.5 font-semibold text-rose-600">
-                                  {app.total_vulnerabilities > 0 ? `${app.total_vulnerabilities} CVEs` : "0 (Secure)"}
-                                </td>
-                                <td className="px-6 py-3.5 font-semibold text-rose-700">
-                                  {app.high_critical_vulnerabilities > 0 ? `${app.high_critical_vulnerabilities} High/Crit` : "0"}
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
+                                ) : (
+                                  <span className="text-rose-600 flex items-center gap-1">
+                                    <span className="font-bold text-sm">✗</span>
+                                    License Risks
+                                  </span>
+                                )}
+                              </div>
+
+                              {/* 2. Vulnerability Status */}
+                              <div className="flex items-center gap-1.5 font-medium">
+                                {app.vulnerable_packages_count === 0 ? (
+                                  <span className="text-emerald-600 flex items-center gap-1">
+                                    <span className="font-bold text-sm">✓</span>
+                                    No Vulnerabilities
+                                  </span>
+                                ) : (
+                                  <span className="text-rose-600 flex items-center gap-1">
+                                    <span className="font-bold text-sm">✗</span>
+                                    {app.vulnerable_packages_count} Vulnerable Pkg(s)
+                                  </span>
+                                )}
+                              </div>
+
+                              {/* 3. Maintenance Status */}
+                              <div className="flex items-center gap-1.5 font-medium">
+                                {app.unmaintained_packages_count === 0 ? (
+                                  <span className="text-emerald-600 flex items-center gap-1">
+                                    <span className="font-bold text-sm">✓</span>
+                                    Maintained
+                                  </span>
+                                ) : (
+                                  <span className="text-rose-600 flex items-center gap-1">
+                                    <span className="font-bold text-sm">✗</span>
+                                    {app.unmaintained_packages_count} Unmaintained
+                                  </span>
+                                )}
+                              </div>
+
+                              {/* 4. GPL copyleft Check */}
+                              <div className="flex items-center gap-1.5 font-medium">
+                                {!app.gpl_found ? (
+                                  <span className="text-emerald-600 flex items-center gap-1">
+                                    <span className="font-bold text-sm">✓</span>
+                                    No GPL Copyleft
+                                  </span>
+                                ) : (
+                                  <span className="text-rose-600 flex items-center gap-1">
+                                    <span className="font-bold text-sm">✗</span>
+                                    GPL Found
+                                  </span>
+                                )}
+                              </div>
+
+                            </div>
+
+                            {/* Compliance Bar */}
+                            <div className="space-y-1.5 pt-2">
+                              <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                                <div
+                                  className={`h-full rounded-full transition-all duration-300 ${
+                                    app.compliance_score >= 80
+                                      ? "bg-emerald-500"
+                                      : app.compliance_score >= 50
+                                      ? "bg-amber-500"
+                                      : "bg-rose-500"
+                                  }`}
+                                  style={{ width: `${app.compliance_score}%` }}
+                                ></div>
+                              </div>
+                            </div>
+
+                          </div>
+                        ))}
                       </div>
                     </div>
                   </>

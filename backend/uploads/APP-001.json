@@ -1,24 +1,41 @@
 {
   "bomFormat": "CycloneDX",
-  "specVersion": "1.4",
+  "specVersion": "1.5",
+  "serialNumber": "urn:uuid:123e4567-e89b-12d3-a456-426614174000",
   "version": 1,
-  "components": [
-    {
-      "name": "gomock",
-      "version": "5.3.0",
-      "type": "library",
-      "licenses": [
+  "metadata": {
+    "timestamp": "2026-07-12T12:00:00Z",
+    "component": {
+      "type": "application",
+      "name": "EnterprisePaymentGateway",
+      "version": "4.8.2",
+      "bom-ref": "app-1",
+      "supplier": {
+        "name": "Demo Corp"
+      },
+      "properties": [
         {
-          "license": {
-            "id": "BSD-3-Clause"
-          }
+          "name": "application_id",
+          "value": "APP-008"
+        },
+        {
+          "name": "criticality",
+          "value": "HIGH"
+        },
+        {
+          "name": "environment",
+          "value": "Production"
         }
       ]
-    },
+    }
+  },
+  "components": [
     {
-      "name": "jackson-databind",
-      "version": "2.12.0",
       "type": "library",
+      "bom-ref": "log4j",
+      "name": "log4j-core",
+      "version": "2.14.1",
+      "purl": "pkg:maven/org.apache.logging.log4j/log4j-core@2.14.1",
       "licenses": [
         {
           "license": {
@@ -28,17 +45,150 @@
       ]
     },
     {
-      "name": "lombok",
-      "version": "1.18.24",
       "type": "library",
+      "bom-ref": "spring",
+      "name": "spring-core",
+      "version": "5.3.30",
+      "purl": "pkg:maven/org.springframework/spring-core@5.3.30",
       "licenses": [
         {
           "license": {
-            "id": "MIT"
+            "id": "Apache-2.0"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "jackson",
+      "name": "jackson-databind",
+      "version": "2.13.4",
+      "purl": "pkg:maven/com.fasterxml.jackson.core/jackson-databind@2.13.4",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "snakeyaml",
+      "name": "snakeyaml",
+      "version": "1.33",
+      "purl": "pkg:maven/org.yaml/snakeyaml@1.33",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "guava",
+      "name": "guava",
+      "version": "32.1.2-jre",
+      "purl": "pkg:maven/com.google.guava/guava@32.1.2-jre",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "commonsio",
+      "name": "commons-io",
+      "version": "2.11.0",
+      "purl": "pkg:maven/commons-io/commons-io@2.11.0",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
           }
         }
       ]
     }
   ],
-  "dependencies": []
+  "dependencies": [
+    {
+      "ref": "app-1",
+      "dependsOn": [
+        "spring",
+        "log4j",
+        "jackson",
+        "guava"
+      ]
+    },
+    {
+      "ref": "spring",
+      "dependsOn": [
+        "snakeyaml",
+        "commonsio"
+      ]
+    },
+    {
+      "ref": "log4j",
+      "dependsOn": [
+        "commonsio"
+      ]
+    },
+    {
+      "ref": "jackson",
+      "dependsOn": [
+        "commonsio"
+      ]
+    },
+    {
+      "ref": "guava",
+      "dependsOn": []
+    },
+    {
+      "ref": "snakeyaml",
+      "dependsOn": []
+    },
+    {
+      "ref": "commonsio",
+      "dependsOn": []
+    }
+  ],
+  "vulnerabilities": [
+    {
+      "id": "CVE-2021-44228",
+      "source": {
+        "name": "NVD"
+      },
+      "ratings": [
+        {
+          "severity": "critical"
+        }
+      ],
+      "affects": [
+        {
+          "ref": "log4j"
+        }
+      ]
+    },
+    {
+      "id": "CVE-2022-1471",
+      "source": {
+        "name": "NVD"
+      },
+      "ratings": [
+        {
+          "severity": "high"
+        }
+      ],
+      "affects": [
+        {
+          "ref": "snakeyaml"
+        }
+      ]
+    }
+  ]
 }
