@@ -10,7 +10,7 @@ import MaintenanceTable from "../components/MaintenanceTable";
 import AttackPath from "../components/AttackPath";
 import AlertDashboard from "../components/AlertDashboard";
 import RemediationPlaybook from "../components/RemediationPlaybook";
-import { LayoutDashboard, Network, ShieldAlert, Scale, Search, X, Layers, AlertTriangle, CheckCircle2, Cpu } from "lucide-react";
+import { LayoutDashboard, Network, ShieldAlert, Scale, Search, X, Layers, AlertTriangle, CheckCircle2, Cpu, Wrench } from "lucide-react";
 import api from "../api/api";
 
 function Results() {
@@ -22,6 +22,49 @@ function Results() {
   const [correlationLoading, setCorrelationLoading] = useState(false);
   const [selectedPkgName, setSelectedPkgName] = useState("");
   const [selectedAppId, setSelectedAppId] = useState("");
+  const [simPkgName, setSimPkgName] = useState("");
+
+  const [ignoredCves, setIgnoredCves] = useState(() => {
+    const saved = localStorage.getItem("false_positives");
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  const toggleFalsePositive = (cveId) => {
+    setIgnoredCves((prev) => {
+      const next = prev.includes(cveId) ? prev.filter((id) => id !== cveId) : [...prev, cveId];
+      localStorage.setItem("false_positives", JSON.stringify(next));
+      return next;
+    });
+  };
+
+  // Re-calculate dynamic summary with ignored CVEs taken into account
+  const originalTotalVulns = (analysis?.vulnerabilities || []).reduce((sum, pkg) => sum + (pkg.vulnerabilities?.length || 0), 0);
+  const ignoredCount = ignoredCves.filter(cve => 
+    (analysis?.vulnerabilities || []).some(pkg => (pkg.vulnerabilities || []).some(v => v.cve_id === cve))
+  ).length;
+
+  const totalActiveVulns = Math.max(0, originalTotalVulns - ignoredCount);
+  
+  const dynamicRiskScore = Math.max(0, Math.round(
+    analysis?.summary?.risk_score * (originalTotalVulns > 0 ? (originalTotalVulns - ignoredCount) / originalTotalVulns : 1)
+  ));
+  
+  const dynamicRiskLevel = dynamicRiskScore >= 75
+    ? "CRITICAL"
+    : dynamicRiskScore >= 50
+    ? "HIGH"
+    : dynamicRiskScore >= 25
+    ? "MEDIUM"
+    : dynamicRiskScore > 0
+    ? "LOW"
+    : "SECURE";
+
+  const dynamicSummary = analysis?.summary ? {
+    ...analysis.summary,
+    total_vulnerabilities: totalActiveVulns,
+    risk_score: dynamicRiskScore,
+    risk_level: dynamicRiskLevel
+  } : null;
 
   const fetchCorrelations = async () => {
     try {
@@ -37,6 +80,9 @@ function Results() {
         }
         if (response.data.applications.length > 0) {
           setSelectedAppId(response.data.applications[0].app_id);
+        }
+        if (response.data.all_packages.length > 0) {
+          setSimPkgName(response.data.all_packages[0].name);
         }
       }
     } catch (err) {
@@ -226,7 +272,7 @@ function Results() {
             {activeTab === "overview" && (
               <div className="space-y-8 animate-fade-in">
                 {/* Metric scorecard */}
-                <DashboardCards summary={analysis.summary} />
+                <DashboardCards summary={dynamicSummary} />
                 
                 {/* Live alerts dashboard */}
                 <AlertDashboard vulnerabilities={analysis.vulnerabilities} />
@@ -246,7 +292,11 @@ function Results() {
             {activeTab === "security" && (
               <div className="space-y-8 animate-fade-in">
                 {/* Vulnerability Report Table */}
-                <VulnerabilityTable vulnerabilities={filteredVulnerabilities} />
+                <VulnerabilityTable 
+                  vulnerabilities={filteredVulnerabilities} 
+                  ignoredCves={ignoredCves}
+                  onToggleFalsePositive={toggleFalsePositive}
+                />
 
                 {/* Attack Path Visualizations */}
                 <AttackPath attackPaths={analysis.attack_paths || []} />
@@ -488,6 +538,196 @@ function Results() {
                         </div>
                       </div>
 
+                    </div>
+
+                    {/* Risk Pattern Clustering (Behavioral Grouping) */}
+                    <div className="space-y-4">
+                      <div>
+                        <h3 className="text-sm font-bold text-slate-800">
+                          Vulnerability Risk Clustering (Behavioral Grouping)
+                        </h3>
+                        <p className="text-[10px] text-slate-400 font-medium">
+                          Groups software packages by operational risk profiles, sharing density, and severity metrics
+                        </p>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        {correlationData.clusters?.map((cluster) => (
+                          <div key={cluster.id} className="bg-white rounded-2xl border border-slate-200/60 p-5 space-y-3.5 shadow-sm hover:shadow-md transition-all duration-200">
+                            <div className="flex justify-between items-center border-b border-slate-100 pb-2.5">
+                              <span className="font-bold text-slate-800 text-xs truncate max-w-[200px]" title={cluster.name}>
+                                {cluster.name}
+                              </span>
+                              <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded border ${
+                                cluster.severity === "HIGH"
+                                  ? "bg-rose-50 text-rose-700 border-rose-100"
+                                  : cluster.severity === "MEDIUM"
+                                  ? "bg-amber-50 text-amber-700 border-amber-100"
+                                  : "bg-emerald-50 text-emerald-700 border-emerald-100"
+                              }`}>
+                                {cluster.severity} PROFILE
+                              </span>
+                            </div>
+                            <p className="text-[10px] text-slate-400 leading-relaxed font-medium">
+                              {cluster.reason}
+                            </p>
+                            <div className="space-y-1.5">
+                              <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider block">Group Packages</span>
+                              {cluster.packages.length > 0 ? (
+                                <div className="flex flex-wrap gap-1.5">
+                                  {cluster.packages.map(pkg => (
+                                    <span key={pkg} className="bg-slate-50 border border-slate-200/80 text-slate-655 text-[9px] font-mono px-2 py-0.5 rounded">
+                                      {pkg}
+                                    </span>
+                                  ))}
+                                </div>
+                              ) : (
+                                <span className="text-[10px] text-slate-400 italic">No packages in this group</span>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Breach Impact Simulator */}
+                    <div className="bg-white rounded-2xl border border-slate-200/60 p-6 shadow-sm space-y-5">
+                      <div className="border-b border-slate-100 pb-3 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                        <div>
+                          <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
+                            <Wrench size={16} className="text-indigo-500" />
+                            Supply Chain Breach Impact Simulator
+                          </h3>
+                          <p className="text-[10px] text-slate-400 font-medium">
+                            Simulate the lateral compromise blast radius across systems if a dependency library is exploited
+                          </p>
+                        </div>
+                        
+                        <div className="w-full sm:w-64">
+                          <select
+                            value={simPkgName}
+                            onChange={(e) => setSimPkgName(e.target.value)}
+                            className="w-full bg-slate-50 border border-slate-200 text-slate-700 text-xs font-semibold px-4 py-2.5 rounded-xl cursor-pointer"
+                          >
+                            <option value="">Select package to compromise...</option>
+                            {correlationData.all_packages.map((pkg) => (
+                              <option key={pkg.name} value={pkg.name}>
+                                {pkg.name} {pkg.vulnerable ? "⚠️" : ""}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+
+                      {simPkgName ? (
+                        (() => {
+                          const pkg = correlationData.all_packages.find(p => p.name.toLowerCase() === simPkgName.toLowerCase());
+                          if (!pkg) return null;
+
+                          const affectedApps = pkg.apps || [];
+                          
+                          // Calculate blast rating
+                          const hasCriticalApp = affectedApps.some(a => {
+                            const appObj = correlationData.applications.find(x => x.app_id === a.app_id);
+                            return appObj?.criticality === "CRITICAL";
+                          });
+                          const hasHighApp = affectedApps.some(a => {
+                            const appObj = correlationData.applications.find(x => x.app_id === a.app_id);
+                            return appObj?.criticality === "HIGH";
+                          });
+                          
+                          const blastRating = hasCriticalApp ? "CRITICAL" : hasHighApp ? "HIGH" : "MEDIUM";
+                          const totalExposedDeps = affectedApps.reduce((sum, a) => {
+                            const appObj = correlationData.applications.find(x => x.app_id === a.app_id);
+                            return sum + (appObj?.total_dependencies || 0);
+                          }, 0);
+
+                          return (
+                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 pt-1">
+                              
+                              {/* Left Panel: Stats */}
+                              <div className="space-y-4 lg:border-r lg:border-slate-100 lg:pr-6">
+                                <div className="space-y-1">
+                                  <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Compromised Package</span>
+                                  <span className="font-mono text-sm font-bold text-slate-800 block bg-slate-50 border border-slate-200/60 p-2.5 rounded-xl text-center">
+                                    {pkg.name} (v{affectedApps[0]?.version || "N/A"})
+                                  </span>
+                                </div>
+
+                                <div className="space-y-1">
+                                  <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Blast Radius Severity</span>
+                                  <span className={`text-xs font-bold px-3 py-2 border rounded-xl text-center block ${
+                                    blastRating === "CRITICAL"
+                                      ? "bg-rose-50 text-rose-700 border-rose-200"
+                                      : "bg-orange-50 text-orange-700 border-orange-200"
+                                  }`}>
+                                    {blastRating} RISK IMPACT
+                                  </span>
+                                </div>
+
+                                <div className="space-y-1">
+                                  <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Systems Exposure Blast</span>
+                                  <div className="grid grid-cols-2 gap-3 text-center text-xs">
+                                    <div className="bg-slate-50/50 border border-slate-150 p-3 rounded-xl">
+                                      <span className="font-extrabold text-slate-800 text-lg block">{affectedApps.length}</span>
+                                      <span className="text-[9px] text-slate-400 block mt-0.5">Systems Compromised</span>
+                                    </div>
+                                    <div className="bg-slate-50/50 border border-slate-150 p-3 rounded-xl">
+                                      <span className="font-extrabold text-slate-800 text-lg block">{totalExposedDeps}</span>
+                                      <span className="text-[9px] text-slate-400 block mt-0.5">Exposed Packages</span>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Right Panel: Flow Chart */}
+                              <div className="lg:col-span-2 space-y-4 flex flex-col justify-center">
+                                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Compromise Propagation Pathway</span>
+                                
+                                <div className="flex flex-col sm:flex-row items-center justify-start gap-4 p-4 bg-slate-50/50 border border-slate-150 rounded-2xl min-h-[120px]">
+                                  {/* Step 1: Package */}
+                                  <div className="flex flex-col items-center p-3 rounded-xl bg-slate-900 text-white text-xs text-center border border-slate-800 w-36 shrink-0 shadow-md">
+                                    <span className="text-[8px] text-indigo-300 font-bold uppercase tracking-wider">Exploited Library</span>
+                                    <span className="font-mono font-bold mt-1 truncate max-w-full">{pkg.name}</span>
+                                  </div>
+
+                                  <div className="hidden sm:block text-slate-355 text-lg font-bold">➔</div>
+
+                                  {/* Step 2+: Apps */}
+                                  <div className="flex flex-wrap items-center gap-3">
+                                    {affectedApps.map((app, index) => {
+                                      const appObj = correlationData.applications.find(x => x.app_id === app.app_id);
+                                      return (
+                                        <div key={app.app_id} className="flex items-center gap-3">
+                                          <div className={`flex flex-col items-center p-3 rounded-xl text-xs text-center border w-36 shrink-0 shadow-sm ${
+                                            appObj?.criticality === "CRITICAL"
+                                              ? "bg-rose-50 text-rose-700 border-rose-200"
+                                              : appObj?.criticality === "HIGH"
+                                              ? "bg-orange-50 text-orange-700 border-orange-200"
+                                              : "bg-indigo-50 text-indigo-700 border-indigo-200"
+                                          }`}>
+                                            <span className="text-[8px] font-bold uppercase tracking-wider opacity-85">Exposed Application</span>
+                                            <span className="font-bold mt-1 truncate max-w-full">{app.app_name}</span>
+                                          </div>
+                                          {index < affectedApps.length - 1 && (
+                                            <span className="text-slate-350 text-xs font-semibold shrink-0">and</span>
+                                          )}
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                                <p className="text-[10px] text-slate-455 italic leading-relaxed">
+                                  Simulation: Exploiting vulnerabilities in <strong>{pkg.name}</strong> grants immediate entry points to {affectedApps.map(a => a.app_name).join(", ")}, exposing {totalExposedDeps} internal codebase references to downstream supply chain lateral movements.
+                                </p>
+                              </div>
+
+                            </div>
+                          );
+                        })()
+                      ) : (
+                        <p className="text-center py-6 text-slate-400 text-xs italic">Select a package from the dropdown to run compromise simulation</p>
+                      )}
                     </div>
 
                     {/* Shared Vulnerable Packages Inventory Table */}

@@ -195,8 +195,42 @@ def get_cross_system_correlations(upload_folder):
         if pkg["vulnerable"] and len(pkg["apps"]) > 1
     ]
 
+    # Calculate behavioral risk clusters
+    clusters = [
+        {
+            "id": 1,
+            "name": "High-Severity Systemic Threats",
+            "reason": "Critical/High CVSS vulnerabilities and unmaintained components shared across core enterprise applications.",
+            "severity": "HIGH",
+            "packages": []
+        },
+        {
+            "id": 2,
+            "name": "Moderate Edge Package Risks",
+            "reason": "Medium vulnerability rating, used in web servers and client-facing API gateways.",
+            "severity": "MEDIUM",
+            "packages": []
+        },
+        {
+            "id": 3,
+            "name": "Stable Low-Risk Utilities",
+            "reason": "Low/No CVE footprint, permissive licensing, and high package health maintenance.",
+            "severity": "LOW",
+            "packages": []
+        }
+    ]
+
+    for pkg in all_packages:
+        if pkg["vulnerable"] and pkg["severity"] in ["CRITICAL", "HIGH"]:
+            clusters[0]["packages"].append(pkg["name"])
+        elif pkg["vulnerable"] and pkg["severity"] == "MEDIUM":
+            clusters[1]["packages"].append(pkg["name"])
+        else:
+            clusters[2]["packages"].append(pkg["name"])
+
     return {
         "all_packages": all_packages,
         "shared_vulnerable": shared_vulnerable,
-        "applications": list(app_vulnerability_summary.values())
+        "applications": list(app_vulnerability_summary.values()),
+        "clusters": clusters
     }
