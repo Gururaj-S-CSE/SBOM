@@ -24,7 +24,9 @@ with open(APP_PATH) as f:
 
 application = APPLICATIONS[0]
 
-def generate_report(filepath):
+def generate_report(filepath, application=None):
+    if application is None:
+        application = APPLICATIONS[0]
 
     data = parse_sbom(filepath)
 

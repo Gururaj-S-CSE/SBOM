@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Navbar from "../components/Navbar";
 import Sidebar from "../components/Sidebar";
 import DashboardCards from "../components/DashboardCards";
@@ -10,12 +10,47 @@ import MaintenanceTable from "../components/MaintenanceTable";
 import AttackPath from "../components/AttackPath";
 import AlertDashboard from "../components/AlertDashboard";
 import RemediationPlaybook from "../components/RemediationPlaybook";
-import { LayoutDashboard, Network, ShieldAlert, Scale, Search, X } from "lucide-react";
+import { LayoutDashboard, Network, ShieldAlert, Scale, Search, X, Layers, AlertTriangle, CheckCircle2, Cpu } from "lucide-react";
+import api from "../api/api";
 
 function Results() {
   const analysis = JSON.parse(localStorage.getItem("analysis"));
   const [activeTab, setActiveTab] = useState("overview");
   const [searchQuery, setSearchQuery] = useState("");
+
+  const [correlationData, setCorrelationData] = useState(null);
+  const [correlationLoading, setCorrelationLoading] = useState(false);
+  const [selectedPkgName, setSelectedPkgName] = useState("");
+  const [selectedAppId, setSelectedAppId] = useState("");
+
+  const fetchCorrelations = async () => {
+    try {
+      setCorrelationLoading(true);
+      const response = await api.get("/correlations");
+      setCorrelationData(response.data);
+      
+      // Select default package and app for the dropdowns
+      if (response.data) {
+        const vulnPkgs = response.data.all_packages.filter(p => p.vulnerable);
+        if (vulnPkgs.length > 0) {
+          setSelectedPkgName(vulnPkgs[0].name);
+        }
+        if (response.data.applications.length > 0) {
+          setSelectedAppId(response.data.applications[0].app_id);
+        }
+      }
+    } catch (err) {
+      console.error("Failed to fetch correlation data:", err);
+    } finally {
+      setCorrelationLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === "correlation" && !correlationData) {
+      fetchCorrelations();
+    }
+  }, [activeTab, correlationData]);
 
   if (!analysis) {
     return (
@@ -71,6 +106,7 @@ function Results() {
     { id: "dependencies", label: "Components & Graph", icon: <Network size={15} /> },
     { id: "security", label: "Vulnerability Scan", icon: <ShieldAlert size={15} /> },
     { id: "compliance", label: "Compliance & Health", icon: <Scale size={15} /> },
+    { id: "correlation", label: "Multi-System Correlation", icon: <Layers size={15} /> },
   ];
 
   const getCriticalityBadgeColor = (criticality) => {
@@ -227,6 +263,348 @@ function Results() {
 
                 {/* License Analysis and Risk Table */}
                 <LicenseTable licenses={filteredLicenses} />
+              </div>
+            )}
+
+            {activeTab === "correlation" && (
+              <div className="space-y-8 animate-fade-in">
+                {/* Intro Card */}
+                <div className="bg-gradient-to-r from-slate-900 to-indigo-950 rounded-2xl p-6 text-white border border-slate-800 shadow-md flex items-center justify-between gap-6">
+                  <div className="space-y-2">
+                    <h3 className="text-base font-bold flex items-center gap-2">
+                      <Layers size={18} className="text-indigo-400" />
+                      Cross-System Security Risk Linking
+                    </h3>
+                    <p className="text-xs text-slate-350 max-w-2xl leading-relaxed">
+                      Supply chain vulnerability correlation evaluates package dependencies across all registered application catalogs. Easily locate shared vulnerability vector footprints and query risk overlap propagation across system environments.
+                    </p>
+                  </div>
+                </div>
+
+                {correlationLoading ? (
+                  <div className="bg-white rounded-2xl border border-slate-200/60 p-12 text-center text-slate-455 font-semibold flex items-center justify-center gap-3">
+                    <div className="w-5 h-5 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+                    Loading cross-application risk mapping...
+                  </div>
+                ) : correlationData ? (
+                  <>
+                    {/* Summary Cards */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                      <div className="bg-white rounded-2xl border border-slate-200/60 p-5 flex items-center justify-between">
+                        <div className="space-y-1">
+                          <span className="text-slate-400 text-[10px] font-bold uppercase tracking-wider block">Monitored Systems</span>
+                          <h4 className="text-2xl font-extrabold text-slate-800">{correlationData.applications?.length || 0}</h4>
+                        </div>
+                        <div className="p-2.5 rounded-xl bg-indigo-50 text-indigo-600 shrink-0"><Cpu size={20} /></div>
+                      </div>
+
+                      <div className="bg-white rounded-2xl border border-slate-200/60 p-5 flex items-center justify-between">
+                        <div className="space-y-1">
+                          <span className="text-slate-400 text-[10px] font-bold uppercase tracking-wider block">Shared Vulnerable Packages</span>
+                          <h4 className="text-2xl font-extrabold text-rose-600">{correlationData.shared_vulnerable?.length || 0}</h4>
+                        </div>
+                        <div className="p-2.5 rounded-xl bg-rose-50 text-rose-600 shrink-0"><AlertTriangle size={20} /></div>
+                      </div>
+
+                      <div className="bg-white rounded-2xl border border-slate-200/60 p-5 flex items-center justify-between">
+                        <div className="space-y-1">
+                          <span className="text-slate-400 text-[10px] font-bold uppercase tracking-wider block">Total Unique Packages</span>
+                          <h4 className="text-2xl font-extrabold text-emerald-600">{correlationData.all_packages?.length || 0}</h4>
+                        </div>
+                        <div className="p-2.5 rounded-xl bg-emerald-50 text-emerald-600 shrink-0"><CheckCircle2 size={20} /></div>
+                      </div>
+                    </div>
+
+                    {/* Interactive Q&A Panel */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                      
+                      {/* Q1: Is this vulnerable package used in other applications? */}
+                      <div className="bg-white rounded-2xl border border-slate-200/60 p-6 space-y-4">
+                        <div className="border-b border-slate-100 pb-3">
+                          <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
+                            Is this vulnerable package used in any other applications?
+                          </h4>
+                          <p className="text-[10px] text-slate-400 mt-0.5">Select a library to discover its blast radius across other environments</p>
+                        </div>
+
+                        <div className="space-y-4">
+                          <div>
+                            <select
+                              value={selectedPkgName}
+                              onChange={(e) => setSelectedPkgName(e.target.value)}
+                              className="w-full bg-slate-50 border border-slate-200 text-slate-700 text-xs font-semibold px-4 py-3 rounded-xl cursor-pointer"
+                            >
+                              <option value="">Select a vulnerable package...</option>
+                              {correlationData.all_packages.filter(p => p.vulnerable).map((pkg) => (
+                                <option key={pkg.name} value={pkg.name}>
+                                  {pkg.name} ({pkg.severity} severity)
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+
+                          {selectedPkgName ? (
+                            (() => {
+                              const pkg = correlationData.all_packages.find(p => p.name.toLowerCase() === selectedPkgName.toLowerCase());
+                              if (!pkg) return null;
+                              return (
+                                <div className="space-y-3">
+                                  <div className="bg-slate-50 border border-slate-200/60 rounded-xl p-4 text-xs space-y-2">
+                                    <div className="flex justify-between items-center">
+                                      <span className="font-semibold text-slate-800">Library: {pkg.name}</span>
+                                      <span className="font-bold text-rose-600 text-[10px] bg-rose-50 border border-rose-100 px-2 py-0.5 rounded uppercase">
+                                        {pkg.severity} RISK
+                                      </span>
+                                    </div>
+                                    <p className="text-[10px] text-slate-400">CVEs: {pkg.cves?.join(", ") || "N/A"}</p>
+                                  </div>
+
+                                  <div className="space-y-2">
+                                    <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Affected Applications</span>
+                                    <div className="divide-y divide-slate-100 border border-slate-200/60 rounded-xl overflow-hidden bg-white">
+                                      {pkg.apps.map((app) => (
+                                        <div key={app.app_id} className="flex justify-between items-center p-3 text-xs">
+                                          <div className="flex flex-col">
+                                            <span className="font-semibold text-slate-800">{app.app_name}</span>
+                                            <span className="text-[9px] text-slate-400 font-mono mt-0.5">{app.app_id}</span>
+                                          </div>
+                                          <span className="bg-indigo-50 border border-indigo-100 text-indigo-700 text-[10px] font-mono font-bold px-2 py-0.5 rounded">
+                                            v{app.version}
+                                          </span>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            })()
+                          ) : (
+                            <p className="text-center py-6 text-slate-405 text-xs italic">Select a package to see results</p>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Q2: Which applications share the same vulnerable dependency? */}
+                      <div className="bg-white rounded-2xl border border-slate-200/60 p-6 space-y-4">
+                        <div className="border-b border-slate-100 pb-3">
+                          <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
+                            Which applications share the same vulnerable dependency?
+                          </h4>
+                          <p className="text-[10px] text-slate-400 mt-0.5">Find systems exposed to similar supply chain library threats</p>
+                        </div>
+
+                        <div className="space-y-4">
+                          <div>
+                            <select
+                              value={selectedAppId}
+                              onChange={(e) => setSelectedAppId(e.target.value)}
+                              className="w-full bg-slate-50 border border-slate-200 text-slate-700 text-xs font-semibold px-4 py-3 rounded-xl cursor-pointer"
+                            >
+                              <option value="">Select an application...</option>
+                              {correlationData.applications.map((app) => (
+                                <option key={app.app_id} value={app.app_id}>
+                                  {app.app_name} ({app.criticality} criticality)
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+
+                          {selectedAppId ? (
+                            (() => {
+                              // Find all vulnerable packages used by selectedAppId
+                              const currentAppVulnPkgs = correlationData.all_packages.filter(
+                                pkg => pkg.vulnerable && pkg.apps.some(a => a.app_id === selectedAppId)
+                              );
+
+                              if (currentAppVulnPkgs.length === 0) {
+                                return <p className="text-center py-6 text-emerald-600 text-xs font-semibold">🎉 No vulnerable packages are used by this application.</p>;
+                              }
+
+                              // Find other applications that use any of these vulnerable packages
+                              const sharedMap = {};
+                              currentAppVulnPkgs.forEach(pkg => {
+                                pkg.apps.forEach(a => {
+                                  if (a.app_id !== selectedAppId) {
+                                    if (!sharedMap[a.app_id]) {
+                                      sharedMap[a.app_id] = {
+                                        app_id: a.app_id,
+                                        app_name: a.app_name,
+                                        shared_packages: []
+                                      };
+                                    }
+                                    sharedMap[a.app_id].shared_packages.push({
+                                      name: pkg.name,
+                                      version: a.version,
+                                      severity: pkg.severity
+                                    });
+                                  }
+                                });
+                              });
+
+                              const sharedApps = Object.values(sharedMap);
+
+                              return (
+                                <div className="space-y-4">
+                                  <div className="bg-rose-50/50 border border-rose-100 rounded-xl p-4 text-xs">
+                                    <span className="font-bold text-rose-700 uppercase block mb-1">Active Exposure</span>
+                                    This app uses <strong className="text-rose-700">{currentAppVulnPkgs.length}</strong> vulnerable package(s): {currentAppVulnPkgs.map(p => p.name).join(", ")}.
+                                  </div>
+
+                                  <div className="space-y-2">
+                                    <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Sharing Applications</span>
+                                    {sharedApps.length > 0 ? (
+                                      <div className="divide-y divide-slate-100 border border-slate-200/60 rounded-xl overflow-hidden bg-white max-h-56 overflow-y-auto">
+                                        {sharedApps.map((app) => (
+                                          <div key={app.app_id} className="p-3 text-xs space-y-2">
+                                            <div className="flex justify-between items-center">
+                                              <div className="flex flex-col">
+                                                <span className="font-semibold text-slate-800">{app.app_name}</span>
+                                                <span className="text-[9px] text-slate-400 mt-0.5">{app.app_id}</span>
+                                              </div>
+                                              <span className="bg-rose-100 border border-rose-200 text-rose-700 text-[9px] font-bold px-2 py-0.5 rounded">
+                                                {app.shared_packages.length} Shared Vulnerability
+                                              </span>
+                                            </div>
+                                            <div className="flex flex-wrap gap-1.5 pt-1">
+                                              {app.shared_packages.map(p => (
+                                                <span key={p.name} className="bg-slate-100 text-slate-655 border border-slate-200 text-[9px] font-medium px-2 py-0.5 rounded">
+                                                  {p.name} (v{p.version})
+                                                </span>
+                                              ))}
+                                            </div>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    ) : (
+                                      <p className="text-center py-6 text-slate-400 text-xs italic">No other applications share vulnerable packages with this system.</p>
+                                    )}
+                                  </div>
+                                </div>
+                              );
+                            })()
+                          ) : (
+                            <p className="text-center py-6 text-slate-400 text-xs italic">Select an application to see results</p>
+                          )}
+                        </div>
+                      </div>
+
+                    </div>
+
+                    {/* Shared Vulnerable Packages Inventory Table */}
+                    <div className="bg-white rounded-2xl border border-slate-200/60 shadow-sm overflow-hidden">
+                      <div className="px-6 py-5 border-b border-slate-100">
+                        <h3 className="text-sm font-bold text-slate-800">
+                          Cross-Application Vulnerable Packages Inventory
+                        </h3>
+                        <p className="text-[10px] text-slate-400 font-medium">
+                          Overview of all vulnerable libraries shared across multiple software applications
+                        </p>
+                      </div>
+
+                      <div className="overflow-x-auto">
+                        <table className="w-full border-collapse text-left">
+                          <thead>
+                            <tr className="bg-slate-50 border-b border-slate-200/60 text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                              <th className="px-6 py-3.5">Package</th>
+                              <th className="px-6 py-3.5">Severity</th>
+                              <th className="px-6 py-3.5">CVE IDs</th>
+                              <th className="px-6 py-3.5">Systems Sharing</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-150 text-xs text-slate-650">
+                            {correlationData.shared_vulnerable?.length === 0 ? (
+                              <tr>
+                                <td colSpan={4} className="px-6 py-8 text-center text-slate-400 font-medium">
+                                  No shared vulnerable dependencies identified across systems.
+                                </td>
+                              </tr>
+                            ) : (
+                              correlationData.shared_vulnerable.map((pkg) => (
+                                <tr key={pkg.name} className="hover:bg-slate-50/50 transition-colors">
+                                  <td className="px-6 py-3.5 font-bold text-slate-800">{pkg.name}</td>
+                                  <td className="px-6 py-3.5">
+                                    <span className={`inline-flex items-center gap-1 font-bold text-[9px] px-2 py-0.5 border rounded-md ${
+                                      pkg.severity === "CRITICAL" || pkg.severity === "HIGH"
+                                        ? "bg-rose-50 text-rose-700 border-rose-100"
+                                        : "bg-amber-50 text-amber-700 border-amber-100"
+                                    }`}>
+                                      {pkg.severity}
+                                    </span>
+                                  </td>
+                                  <td className="px-6 py-3.5 font-mono text-[10px] text-slate-450">{pkg.cves?.join(", ") || "N/A"}</td>
+                                  <td className="px-6 py-3.5">
+                                    <div className="flex flex-wrap gap-1.5">
+                                      {pkg.apps.map(a => (
+                                        <span key={a.app_id} className="bg-indigo-50 border border-indigo-100 text-indigo-700 font-semibold px-2 py-0.5 rounded text-[9px]">
+                                          {a.app_name} (v{a.version})
+                                        </span>
+                                      ))}
+                                    </div>
+                                  </td>
+                                </tr>
+                              ))
+                            )}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+
+                    {/* Systems Posture Table */}
+                    <div className="bg-white rounded-2xl border border-slate-200/60 shadow-sm overflow-hidden">
+                      <div className="px-6 py-5 border-b border-slate-100">
+                        <h3 className="text-sm font-bold text-slate-800">
+                          Cross-Application Vulnerability Posture
+                        </h3>
+                        <p className="text-[10px] text-slate-400 font-medium">
+                          Overview of the relative risk profile and library counts for all monitored catalog applications
+                        </p>
+                      </div>
+
+                      <div className="overflow-x-auto">
+                        <table className="w-full border-collapse text-left">
+                          <thead>
+                            <tr className="bg-slate-50 border-b border-slate-200/60 text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                              <th className="px-6 py-3.5">App Name</th>
+                              <th className="px-6 py-3.5">ID</th>
+                              <th className="px-6 py-3.5">Criticality</th>
+                              <th className="px-6 py-3.5">Total Dependencies</th>
+                              <th className="px-6 py-3.5">Total CVEs</th>
+                              <th className="px-6 py-3.5">High/Critical CVEs</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-150 text-xs text-slate-650">
+                            {correlationData.applications.map((app) => (
+                              <tr key={app.app_id} className="hover:bg-slate-50/50 transition-colors">
+                                <td className="px-6 py-3.5 font-bold text-slate-800">{app.app_name}</td>
+                                <td className="px-6 py-3.5 font-mono text-[10px] text-slate-450">{app.app_id}</td>
+                                <td className="px-6 py-3.5">
+                                  <span className={`inline-flex items-center gap-1 font-bold text-[9px] px-2 py-0.5 border rounded-md ${
+                                    app.criticality === "CRITICAL"
+                                      ? "bg-rose-50 text-rose-700 border-rose-100"
+                                      : app.criticality === "HIGH"
+                                      ? "bg-orange-50 text-orange-700 border-orange-100"
+                                      : "bg-amber-50 text-amber-700 border-amber-100"
+                                  }`}>
+                                    {app.criticality}
+                                  </span>
+                                </td>
+                                <td className="px-6 py-3.5 font-semibold text-slate-800">{app.total_dependencies}</td>
+                                <td className="px-6 py-3.5 font-semibold text-rose-600">
+                                  {app.total_vulnerabilities > 0 ? `${app.total_vulnerabilities} CVEs` : "0 (Secure)"}
+                                </td>
+                                <td className="px-6 py-3.5 font-semibold text-rose-700">
+                                  {app.high_critical_vulnerabilities > 0 ? `${app.high_critical_vulnerabilities} High/Crit` : "0"}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <p className="text-center py-12 text-slate-400 text-xs italic">Unable to load correlation data</p>
+                )}
               </div>
             )}
           </div>

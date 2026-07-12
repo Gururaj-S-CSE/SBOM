@@ -1,5 +1,5 @@
 import { UploadCloud, FileJson, X, Loader2 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../api/api";
 
@@ -12,6 +12,24 @@ function UploadBox() {
   const [loading, setLoading] = useState(false);
   const [loadingStage, setLoadingStage] = useState("");
   const [isDragActive, setIsDragActive] = useState(false);
+
+  const [applications, setApplications] = useState([]);
+  const [selectedAppId, setSelectedAppId] = useState("APP-001");
+
+  useEffect(() => {
+    const fetchApplications = async () => {
+      try {
+        const response = await api.get("/applications");
+        setApplications(response.data);
+        if (response.data && response.data.length > 0) {
+          setSelectedAppId(response.data[0].app_id);
+        }
+      } catch (err) {
+        console.error("Failed to fetch applications:", err);
+      }
+    };
+    fetchApplications();
+  }, []);
 
   const formatFileSize = (bytes) => {
     if (bytes === 0) return "0 Bytes";
@@ -70,6 +88,7 @@ function UploadBox() {
 
     const formData = new FormData();
     formData.append("file", selectedFile);
+    formData.append("app_id", selectedAppId);
 
     try {
       setLoading(true);
@@ -115,6 +134,27 @@ function UploadBox() {
           Scan CycloneDX or SPDX files to identify security vulnerabilities, license risks, and graph application dependencies.
         </p>
       </div>
+
+      {/* Target Application Dropdown */}
+      {applications.length > 0 && (
+        <div className="mb-6 max-w-md mx-auto">
+          <label htmlFor="app-select" className="block text-[10px] font-bold text-slate-450 uppercase tracking-wider mb-2">
+            Target Application System
+          </label>
+          <select
+            id="app-select"
+            value={selectedAppId}
+            onChange={(e) => setSelectedAppId(e.target.value)}
+            className="w-full bg-slate-50 border border-slate-200 text-slate-700 text-xs font-semibold px-4 py-3 rounded-xl focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition-all duration-200 cursor-pointer"
+          >
+            {applications.map((app) => (
+              <option key={app.app_id} value={app.app_id}>
+                {app.name} ({app.language}) - {app.criticality}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
 
       {/* Drag & Drop Box */}
       <div
